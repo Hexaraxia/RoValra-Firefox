@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import { unzipSync } from 'fflate';
 import { root, readJson, writeJson, sha256, updateUrl, validateRepository } from './common.mjs';
 
@@ -44,6 +45,11 @@ export function validateSignedArchive(signedBytes, unsignedBytes, info) {
     const names = payload(unsigned);
     if (JSON.stringify(names) !== JSON.stringify(payload(signed))) throw new Error('Signed XPI file list does not match the tested unsigned package');
     for (const name of names) {
+        if (name === 'manifest.json') {
+            const parse = (bytes) => JSON.parse(Buffer.from(bytes).toString('utf8'));
+            if (!isDeepStrictEqual(parse(signed[name]), parse(unsigned[name]))) throw new Error('Signed XPI manifest values differ from the tested package');
+            continue;
+        }
         if (!Buffer.from(signed[name]).equals(Buffer.from(unsigned[name]))) throw new Error(`Signed XPI content differs from the tested package: ${name}`);
     }
     return sha256(signedBytes);

@@ -40,6 +40,28 @@ test('signed payload must exactly match the tested package', () => {
     assert.throws(() => validateSignedArchive(signed, signed, info), /unexpectedly contains signing metadata/);
 });
 
+test('Mozilla may reformat manifest JSON without changing any values', () => {
+    const unsigned = zipSync(payload);
+    const reordered = Object.fromEntries(Object.entries(manifest).reverse());
+    reordered.browser_specific_settings = {
+        gecko: Object.fromEntries(Object.entries(manifest.browser_specific_settings.gecko).reverse())
+    };
+    const signed = zipSync({ ...payload, ...signatures, 'manifest.json': strToU8(JSON.stringify(reordered, null, 4) + '\n') });
+    assert.equal(validateSignedArchive(signed, unsigned, info), sha256(signed));
+    for (const changed of [
+        { ...manifest, name: 'Changed name' },
+        { ...manifest, permissions: ['cookies'] },
+        { ...manifest, browser_specific_settings: { ...manifest.browser_specific_settings, gecko_android: {} } },
+        { ...manifest, manifest_version: '3' }
+    ]) {
+        assert.throws(() => validateSignedArchive(zipSync({ ...payload, ...signatures, 'manifest.json': strToU8(JSON.stringify(changed)) }), unsigned, info), /manifest values differ/);
+    }
+    const arrays = { ...manifest, permissions: ['storage', 'alarms'] };
+    const arrayUnsigned = zipSync({ ...payload, 'manifest.json': strToU8(JSON.stringify(arrays)) });
+    arrays.permissions.reverse();
+    assert.throws(() => validateSignedArchive(zipSync({ ...payload, ...signatures, 'manifest.json': strToU8(JSON.stringify(arrays)) }), arrayUnsigned, info), /manifest values differ/);
+});
+
 test('a mismatched add-on ID, version, URL, or minimum Firefox version cannot reach the feed', () => {
     const unsigned = zipSync(payload);
     for (const [field, replacement] of [['id', 'other@example'], ['update_url', 'https://example.org/updates.json'], ['strict_min_version', '1.0']]) {
