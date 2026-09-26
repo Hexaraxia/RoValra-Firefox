@@ -4,6 +4,8 @@ This builds a personal Firefox port directly from published [RoValra releases](h
 
 The initial source is RoValra 2.6.13, commit `813c2bc02caf70c8590f53778ea4dea10c8f03dc`. The port version is `2.6.13.3`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
 
+The signed [2.6.13.3 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.13.3/rovalra-firefox-2.6.13.3.xpi) is published and verified as a permanent installation in Firefox 156.0.1. This fork's signing secrets and scheduled workflow are configured. Install using Firefox, disable the old port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, open `about:addons`, use the gear menu's **Install Add-on From File**, and select the downloaded XPI.
+
 ## One-time setup
 
 1. Enable GitHub Actions in [your fork](https://github.com/Hexaraxia/RoValra-Firefox/actions). The workflow and this folder must be on the default branch for scheduled runs.
@@ -33,7 +35,7 @@ npm run package
 
 `dist/firefox` contains the extension. `artifacts` contains the unsigned preview, complete corresponding source, build provenance, and Firefox smoke-test report. The unsigned ZIP is for temporary development installation through `about:debugging`, not permanent installation. Temporary installs disappear when Firefox restarts.
 
-The smoke test starts a separate headless Firefox profile; it does not use your existing profile or Roblox login. It checks extension loading, popup initialization, background settings, messaging, and dynamic rules. CI also checks content startup on Roblox's public logged-out page; set `ROVALRA_LIVE_SMOKE=1` to include that check locally. Authenticated Roblox features such as game joining, OAuth, purchases, and avatar rendering still require manual testing. Mozilla signing and a real signed update cannot be verified without the configured account credentials and published releases.
+The smoke test starts a separate headless Firefox profile; it does not use your existing profile or Roblox login. It checks extension loading, popup initialization, background settings, messaging, and dynamic rules. CI also checks content startup on Roblox's public logged-out page; set `ROVALRA_LIVE_SMOKE=1` to include that check locally. Authenticated Roblox features such as game joining, OAuth, purchases, and avatar rendering still require manual testing. The first release's Mozilla signature, permanent installation, published update feed, and download hash are verified. An update between two signed versions has not yet been exercised.
 
 `FIREFOX_BINARY` can override the browser executable. The default on Windows is `C:\Program Files\Mozilla Firefox\firefox.exe`.
 
