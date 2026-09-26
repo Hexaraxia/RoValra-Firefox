@@ -23,16 +23,16 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
       needed: ${{ steps.release.outputs.needed }}
       version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -73,6 +73,14 @@ jobs:
       - name: Package the tested extension and source
         if: steps.release.outputs.needed == 'true'
         run: npm run package
+      - name: Preserve Firefox diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: firefox/artifacts/firefox-*
       - uses: actions/upload-artifact@v4
         if: steps.release.outputs.needed == 'true'
         with:
@@ -89,13 +97,13 @@ jobs:
   sign:
     needs: build
     if: needs.build.outputs.needed == 'true' && inputs.build_only != true
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -125,15 +133,15 @@ jobs:
 
   publish:
     needs: [build, sign]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm

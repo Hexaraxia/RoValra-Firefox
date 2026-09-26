@@ -50,9 +50,29 @@ try {
     let livePage;
     if (process.env.ROVALRA_LIVE_SMOKE === '1') {
         await driver.get('https://www.roblox.com/discover/');
-        livePage = await driver.executeAsyncScript(function (done) {
-            setTimeout(() => done({ url: location.href, title: document.title, rovalraElements: document.querySelectorAll('[id*="rovalra"], [class*="rovalra"]').length }), 5000);
-        });
+        const started = Date.now();
+        try {
+            await driver.wait(async () => {
+                livePage = await driver.executeScript(function () {
+                    return {
+                        url: location.href,
+                        title: document.title,
+                        readyState: document.readyState,
+                        rovalraElements: document.querySelectorAll('[id*="rovalra"], [class*="rovalra"]').length,
+                        onboardingDialog: Boolean(document.querySelector('.rovalra-global-overlay .rovalra-overlay-content[role="dialog"]')),
+                        robloxNavigation: Boolean(document.querySelector('#navigation')),
+                        bodyLength: document.body?.textContent.length ?? 0,
+                    };
+                });
+                return livePage.onboardingDialog;
+            }, 45000, 'RoValra UI did not appear within 45 seconds', 500);
+        } catch (error) {
+            livePage = { ...livePage, readinessError: error.message };
+            await fs.writeFile(path.join(root, 'artifacts/firefox-page.html'), await driver.getPageSource());
+            await fs.writeFile(path.join(root, 'artifacts/firefox-page.png'), await driver.takeScreenshot(), 'base64');
+        }
+        livePage.elapsedMs = Date.now() - started;
+        await driver.executeAsyncScript(function (done) { setTimeout(done, 1000); });
     }
     await driver.setContext('chrome');
     const errors = await driver.executeScript(function () {
@@ -71,7 +91,8 @@ try {
     assert.equal(state.manifest, manifest.version);
     assert.ok(state.settingsCount > 20, `Background defaults not initialized: ${JSON.stringify(state)}`);
     assert.ok(state.rules.includes(999), 'Firefox background header rules did not initialize');
-    if (process.env.ROVALRA_LIVE_SMOKE === '1') assert.ok(livePage?.rovalraElements > 0, 'No RoValra content appeared on the public Roblox page');
+    if (process.env.ROVALRA_LIVE_SMOKE === '1') assert.equal(livePage?.readinessError, undefined, JSON.stringify(livePage));
+    if (process.env.ROVALRA_LIVE_SMOKE === '1') assert.ok(livePage?.onboardingDialog, 'RoValra onboarding did not initialize on the public Roblox page');
     assert.deepEqual(fatal, [], 'Firefox extension raised script errors');
 } finally {
     if (driver) await driver.quit();

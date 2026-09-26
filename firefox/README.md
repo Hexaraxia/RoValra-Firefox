@@ -2,7 +2,7 @@
 
 This builds a personal Firefox port directly from published [RoValra releases](https://github.com/NotValra/RoValra/releases), applies maintained compatibility fixes, checks it, obtains Mozilla signing, and publishes an update feed. It does not wait for the separate rav4 port.
 
-The initial source is RoValra 2.6.13, commit `813c2bc02caf70c8590f53778ea4dea10c8f03dc`. The Firefox version is `2.6.13.1`. Desktop Firefox 140 or newer is required.
+The initial source is RoValra 2.6.13, commit `813c2bc02caf70c8590f53778ea4dea10c8f03dc`. The Firefox version is `2.6.13.2`. Desktop Firefox 140 or newer is required.
 
 ## One-time setup
 

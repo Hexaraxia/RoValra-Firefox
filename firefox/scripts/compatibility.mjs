@@ -10,6 +10,13 @@ export function replaceExactly(source, anchor, replacement, label, expected = 1)
     return typeof anchor === 'string' ? source.split(anchor).join(replacement) : source.replace(anchor, replacement);
 }
 
+export function fixAuthenticatedUserDomReady(source) {
+    return replaceExactly(source,
+        "    await new Promise((resolve) => {\n        document.addEventListener('DOMContentLoaded', resolve, { once: true });\n    });",
+        '    await waitForDom();',
+        'authenticated user DOM readiness');
+}
+
 function replaceSection(source, start, end, replacement, label) {
     if (source.split(start).length !== 2 || source.split(end).length !== 2) throw new Error(`Firefox compatibility section changed: ${label}`);
     const from = source.indexOf(start);
@@ -88,6 +95,9 @@ export async function applyCompatibility(sourceDir, options = {}) {
         '        (window.requestIdleCallback && ((callback, options) => window.requestIdleCallback(callback, options))) || ((callback) => setTimeout(callback, 300));',
         'player count idle Window receiver'));
     transforms.push('extension-owned-header-entries', 'bound-idle-callbacks');
+
+    await edit('src/content/core/user.js', fixAuthenticatedUserDomReady);
+    transforms.push('authenticated-user-dom-readiness');
 
     await edit('src/content/core/utils/launcher.js', (source) => {
         source = replaceExactly(source, "chrome.runtime.sendMessage({ action: 'injectScript', codeToInject });", "chrome.runtime.sendMessage({ action: 'firefoxLaunch', launch: codeToInject }).then((result) => { if (result?.error) console.error('RoValra launch failed:', result.error); });", 'typed launcher transport');

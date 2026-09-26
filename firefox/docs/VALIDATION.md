@@ -1,5 +1,7 @@
 # Validation on 2026-09-26
 
+Firefox 2.6.13.2 fixes an intermittent fresh-profile startup race: user lookup now uses the existing ready-state-aware DOM helper instead of waiting for an event that may already have fired. Three new regressions cover complete, loading, and storage-read timing. All 23 tests pass. The local Firefox 156.0.1 smoke test confirms the onboarding dialog appears and has no fatal extension errors. The CI check now waits up to 45 seconds for that dialog and preserves diagnostics on failure. GitHub actions use Node 24-compatible v7 releases and the Ubuntu 24.04 runner.
+
 Built upstream release v2.6.13, commit `813c2bc02caf70c8590f53778ea4dea10c8f03dc`, as Firefox 2.6.13.1.
 
 - Twenty regression tests pass, including mixed browser API calls, cross-compartment header serialization, allowed proxy destinations, sender checks, cookie handling, binary responses, typed launch inputs, privacy transforms, version ordering, and signed-payload comparison.

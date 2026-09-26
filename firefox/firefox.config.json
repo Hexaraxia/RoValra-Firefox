@@ -3,6 +3,6 @@
   "name": "RoValra for Firefox (Personal)",
   "repository": "Hexaraxia/RoValra-Firefox",
   "upstreamRepository": "NotValra/RoValra",
-  "portRevision": 1,
+  "portRevision": 2,
   "minimumFirefoxVersion": "140.0"
 }
