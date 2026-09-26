@@ -30,6 +30,6 @@ export async function replaceArtwork(sourceDir) {
         targets.push([`DonatorTiers/${name}`, 64, { 'Bronze.png': [135, 89, 55], 'Silver.png': [118, 131, 148], 'Gold.png': [161, 126, 28], 'Diamond.png': [62, 133, 157] }[name]]);
     }
     for (const [file, size, color] of targets) await fs.writeFile(path.join(assets, file), badge(size, color));
-    await fs.writeFile(path.join(assets, 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="696" height="123" viewBox="0 0 696 123"><rect x="4" y="4" width="115" height="115" rx="16" fill="#265482"/><path d="M61 27v69M27 61h69" stroke="white" stroke-width="17"/><text x="144" y="80" font-family="sans-serif" font-size="44" fill="#687d94">Personal Firefox Port</text></svg>\n');
+    await fs.writeFile(path.join(assets, 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="696" height="123" viewBox="0 0 696 123"><rect x="4" y="4" width="115" height="115" rx="16" fill="#265482"/><path d="M61 27v69M27 61h69" stroke="white" stroke-width="17"/><text x="144" y="80" font-family="sans-serif" font-size="44" fill="#687d94">Personal Browser Port</text></svg>\n');
     return [...targets.map(([file]) => `public/Assets/${file}`), 'public/Assets/logo.svg'];
 }
