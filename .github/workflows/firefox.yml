@@ -1,0 +1,150 @@
+name: Firefox updates
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: Build and test without Mozilla signing or publication
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firefox-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: firefox
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      needed: ${{ steps.release.outputs.needed }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firefox/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Configure this release repository
+        run: npm run configure -- "$GITHUB_REPOSITORY"
+      - name: Resolve the latest stable upstream release
+        run: npm run check-upstream -- --latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Build the candidate without signing credentials
+        run: npm run build -- --lock .cache/candidate.json
+      - name: Check whether this version is already published
+        id: release
+        run: node scripts/release.mjs --check
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Test Firefox compatibility
+        if: steps.release.outputs.needed == 'true'
+        run: npm test
+      - name: Lint the built extension
+        if: steps.release.outputs.needed == 'true'
+        run: npm run lint:firefox
+      - name: Install Firefox
+        if: steps.release.outputs.needed == 'true'
+        id: firefox
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+      - name: Run the native Firefox smoke test
+        if: steps.release.outputs.needed == 'true'
+        run: npm run smoke:firefox
+        env:
+          FIREFOX_BINARY: ${{ steps.firefox.outputs.firefox-path }}
+          MOZ_HEADLESS: '1'
+          ROVALRA_LIVE_SMOKE: '1'
+      - name: Package the tested extension and source
+        if: steps.release.outputs.needed == 'true'
+        run: npm run package
+      - uses: actions/upload-artifact@v4
+        if: steps.release.outputs.needed == 'true'
+        with:
+          name: unsigned-firefox-${{ steps.release.outputs.version }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            firefox/artifacts/rovalra-firefox-*-unsigned.zip
+            firefox/artifacts/rovalra-firefox-*-source.zip
+            firefox/artifacts/build-info.json
+            firefox/artifacts/firefox-smoke.json
+            firefox/artifacts/firefox-lint.json
+
+  sign:
+    needs: build
+    if: needs.build.outputs.needed == 'true' && inputs.build_only != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firefox/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run configure -- "$GITHUB_REPOSITORY"
+      - uses: actions/download-artifact@v4
+        with:
+          name: unsigned-firefox-${{ needs.build.outputs.version }}
+          path: firefox/artifacts
+      - name: Sign or recover an already submitted version
+        run: npm run sign
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+      - name: Validate the signed package and prepare the feed
+        run: npm run release:prepare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-firefox-${{ needs.build.outputs.version }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            firefox/artifacts/rovalra-firefox-*.zip
+            firefox/artifacts/signed/*.xpi
+            firefox/artifacts/build-info.json
+
+  publish:
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firefox/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run configure -- "$GITHUB_REPOSITORY"
+      - uses: actions/download-artifact@v4
+        with:
+          name: signed-firefox-${{ needs.build.outputs.version }}
+          path: firefox/artifacts
+      - name: Upload and verify draft assets, then publish atomically
+        run: node scripts/release.mjs --publish
+        env:
+          GH_TOKEN: ${{ github.token }}

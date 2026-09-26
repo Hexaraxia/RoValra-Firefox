@@ -1,3 +1,7 @@
+## Personal Firefox updates
+
+This fork includes a Firefox port and signed automatic update workflow. See [Firefox setup and installation](firefox/README.md).
+
 <p align="center">
   <img src="./public/Assets/logo.svg" alt="RoValra" width="520">
 </p>

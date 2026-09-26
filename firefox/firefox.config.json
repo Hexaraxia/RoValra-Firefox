@@ -1,0 +1,8 @@
+{
+  "addonId": "{ad9ab7bd-2e53-4be8-ab2e-a0ea014a2e28}",
+  "name": "RoValra for Firefox (Personal)",
+  "repository": "Hexaraxia/RoValra-Firefox",
+  "upstreamRepository": "NotValra/RoValra",
+  "portRevision": 1,
+  "minimumFirefoxVersion": "140.0"
+}
