@@ -4,7 +4,7 @@ This builds a personal Firefox port directly from published [RoValra releases](h
 
 The current source lock is RoValra 2.6.14.1, commit `d661ed8e0d2ae7deeef427356df39c3b39bea24d`. The resulting port version is `2.6.14.103`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
 
-The signed [2.6.13.3 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.13.3/rovalra-firefox-2.6.13.3.xpi) is published and verified as a permanent installation in Firefox 156.0.1. This fork's signing secrets and scheduled workflow are configured. Install using Firefox, disable the old port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, open `about:addons`, use the gear menu's **Install Add-on From File**, and select the downloaded XPI.
+The signed [2.6.14.103 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.14.103/rovalra-firefox-2.6.14.103.xpi) is published. Firefox 157.0 successfully upgraded the previous signed 2.6.13.3 installation through the published update feed. This fork's signing secrets and scheduled workflow are configured. Existing installations can update automatically; to check immediately, open `about:addons` and use the gear menu's **Check for Updates**. For a first installation, use Firefox to download the XPI, disable the old rav4 port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, use **Install Add-on From File** in that gear menu.
 
 ## One-time setup
 
@@ -35,7 +35,7 @@ npm run package
 
 `dist/firefox` contains the extension. `artifacts` contains the unsigned preview, complete corresponding source, build provenance, and Firefox smoke-test report. The unsigned ZIP is for temporary development installation through `about:debugging`, not permanent installation. Temporary installs disappear when Firefox restarts.
 
-The smoke test starts a separate headless Firefox profile; it does not use your existing profile or Roblox login. It checks extension loading, popup initialization, background settings, messaging, and dynamic rules. CI also checks content startup on Roblox's public logged-out page; set `ROVALRA_LIVE_SMOKE=1` to include that check locally. Authenticated Roblox features such as game joining, OAuth, purchases, and avatar rendering still require manual testing. The first release's Mozilla signature, permanent installation, published update feed, and download hash are verified. An update between two signed versions has not yet been exercised.
+The smoke test starts a separate headless Firefox profile; it does not use your existing profile or Roblox login. It checks extension loading, popup initialization, background settings, messaging, and dynamic rules. CI also checks content startup on Roblox's public logged-out page; set `ROVALRA_LIVE_SMOKE=1` to include that check locally. Authenticated Roblox features such as game joining, OAuth, purchases, and avatar rendering still require manual testing. Mozilla signatures, permanent installation, the published update feed, download hashes, and a native update from signed 2.6.13.3 to signed 2.6.14.103 are verified. The update test explicitly invokes Firefox's periodic-reason update check; it does not wait for the browser's elapsed scheduling interval.
 
 `FIREFOX_BINARY` can override the browser executable. The default on Windows is `C:\Program Files\Mozilla Firefox\firefox.exe`.
 

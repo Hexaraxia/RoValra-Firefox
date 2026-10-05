@@ -8,6 +8,10 @@ Firefox version `2.6.14.103` encodes upstream `2.6.14.1` plus port revision 3. T
 
 The new source builds successfully. Permission, host, and content-script surfaces are unchanged, and the existing privacy/compatibility transforms still apply. Mozilla lint reports zero errors and 265 warnings (264 upstream HTML assignment warnings and one Android-version warning). Firefox 157.0 loaded the new temporary build in a disposable profile, initialized 331 settings and rules 999/1000, and displayed the onboarding dialog on the logged-out Roblox charts page with no fatal extension errors. Four upstream unreachable-code warnings remain. Authenticated Roblox features were not tested.
 
+[Workflow 37360401793](https://github.com/Hexaraxia/RoValra-Firefox/actions/runs/37360401793) passed build, signing, and publication of [firefox-v2.6.14.103](https://github.com/Hexaraxia/RoValra-Firefox/releases/tag/firefox-v2.6.14.103). A subsequent release check correctly reports that this version is already published.
+
+The published XPI SHA-256 is `a9e2a754600f41223738db9a58083f71e19614928824307d4fc91cedd1d0a4e1`. The published feed hash matches. In a disposable Firefox 157.0 profile, the old signed 2.6.13.3 XPI was installed non-temporarily, then Firefox's native `findUpdates` with `UPDATE_WHEN_PERIODIC_UPDATE` discovered, downloaded, and installed 2.6.14.103 using the standard update prompt handler. The updated extension remained active, signed (`signedState: 2`), and non-temporary. No permission intervention was needed. The report is `artifacts/signed-update-validation.json` in the development workspace. The browser's elapsed periodic timer and authenticated Roblox features were not tested, and the user's existing browser profile was untouched.
+
 ## Published release 2.6.13.3
 
 - [Workflow 36259664426](https://github.com/Hexaraxia/RoValra-Firefox/actions/runs/36259664426) passed build, signing recovery, and publication. The release is [firefox-v2.6.13.3](https://github.com/Hexaraxia/RoValra-Firefox/releases/tag/firefox-v2.6.13.3).
