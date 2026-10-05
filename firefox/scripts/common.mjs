@@ -31,11 +31,23 @@ export function validateRepository(repository) {
 export function updateUrl(repository) {
     return `https://github.com/${validateRepository(repository)}/releases/latest/download/updates.json`;
 }
-export function portVersion(version, revision) {
-    if (!/^\d+\.\d+\.\d+$/.test(version) || !Number.isInteger(revision) || revision < 1 || revision > 65535) throw new Error('Expected a three-part upstream version and positive portRevision <= 65535');
+export function upstreamVersionParts(version) {
+    if (typeof version !== 'string' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?$/.test(version)) throw new Error('Expected a stable three- or four-part upstream version');
     const parts = version.split('.').map(Number);
-    if (parts.some((n) => n > 65535)) throw new Error('Version component exceeds Firefox limit');
-    return [...parts, revision].join('.');
+    if (parts.some((n) => n > 65535)) throw new Error('Version component exceeds the supported limit of 65535');
+    return parts;
+}
+export function portVersion(version, revision) {
+    const parts = upstreamVersionParts(version);
+    if (!Number.isInteger(revision) || revision < 1 || revision > 99) throw new Error('Expected portRevision between 1 and 99');
+    const encodedRevision = (parts[3] ?? 0) * 100 + revision;
+    if (encodedRevision > 65535) throw new Error('Combined upstream hotfix and port revision exceeds the supported limit of 65535');
+    return [...parts.slice(0, 3), encodedRevision].join('.');
+}
+export function upstreamManifestVersionMatches(manifestVersion, releaseVersion) {
+    const manifest = upstreamVersionParts(manifestVersion);
+    const release = upstreamVersionParts(releaseVersion);
+    return manifestVersion === releaseVersion || (release.length === 4 && manifest.length === 3 && manifest.every((part, index) => part === release[index]));
 }
 export async function filesUnder(directory) {
     const files = [];

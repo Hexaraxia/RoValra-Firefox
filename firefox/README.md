@@ -2,7 +2,7 @@
 
 This builds a personal Firefox port directly from published [RoValra releases](https://github.com/NotValra/RoValra/releases), applies maintained compatibility fixes, checks it, obtains Mozilla signing, and publishes an update feed. It does not wait for the separate rav4 port.
 
-The initial source is RoValra 2.6.13, commit `813c2bc02caf70c8590f53778ea4dea10c8f03dc`. The port version is `2.6.13.3`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
+The current source lock is RoValra 2.6.14.1, commit `d661ed8e0d2ae7deeef427356df39c3b39bea24d`. The resulting port version is `2.6.14.103`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
 
 The signed [2.6.13.3 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.13.3/rovalra-firefox-2.6.13.3.xpi) is published and verified as a permanent installation in Firefox 156.0.1. This fork's signing secrets and scheduled workflow are configured. Install using Firefox, disable the old port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, open `about:addons`, use the gear menu's **Install Add-on From File**, and select the downloaded XPI.
 
@@ -46,7 +46,9 @@ npm run check-upstream
 npm run build -- --lock .cache/candidate.json
 ```
 
-The checked-in lock remains the reproducible starting version. Automation resolves a published release tag to an immutable commit, rather than building untagged upstream changes. A fourth numeric version component is reserved for port corrections; increase `portRevision` before releasing a changed port of the same upstream version.
+The checked-in lock remains the reproducible starting version. Automation resolves a published release tag to an immutable commit, rather than building untagged upstream changes. Stable upstream versions may have three or four numeric parts. The Firefox version uses the first three parts followed by `upstreamHotfix * 100 + portRevision`; a missing hotfix is zero. This preserves existing versions such as `2.6.13.3`, and upstream `2.6.14.1` with port revision 3 becomes `2.6.14.103`. Keep `portRevision` between 1 and 99 and increase it before releasing a changed port of the same upstream version. Components, including the encoded fourth part, must remain within the pipeline's supported limit of 65535.
+
+Upstream hotfix tags may retain their matching three-part base version in `manifest.json`. The build accepts that case or an exact version match, rejects unrelated manifest versions, and records the original manifest version in `build-info.json`.
 
 ## Compatibility and release behavior
 

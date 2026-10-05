@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { unzipSync } from 'fflate';
-import { root, readJson, writeJson, run, cleanGenerated, sha256, updateUrl, portVersion, filesUnder } from './common.mjs';
+import { root, readJson, writeJson, run, cleanGenerated, sha256, updateUrl, portVersion, upstreamManifestVersionMatches, filesUnder } from './common.mjs';
 import { replaceArtwork } from './artwork.mjs';
 import { applyCompatibility } from './compatibility.mjs';
 import { applyPrivacy, REQUIRED_DATA_COLLECTION } from './privacy.mjs';
@@ -34,7 +34,8 @@ for (const [name, data] of Object.entries(unzipSync(archive))) {
     await fs.writeFile(target, data);
 }
 const manifest = await readJson(path.join(source, 'manifest.json'));
-if (manifest.version !== lock.version || manifest.manifest_version !== 3 || manifest.background?.service_worker !== 'background.js') throw new Error('Upstream manifest requires a compatibility review');
+if (!upstreamManifestVersionMatches(manifest.version, lock.version) || manifest.manifest_version !== 3 || manifest.background?.service_worker !== 'background.js') throw new Error('Upstream manifest requires a compatibility review');
+const upstreamManifestVersion = manifest.version;
 const baseline = await readJson(path.join(root, 'upstream-surface.json'));
 for (const key of ['permissions', 'optional_permissions', 'host_permissions', 'content_scripts', 'web_accessible_resources']) {
     if (JSON.stringify(manifest[key]) !== JSON.stringify(baseline[key])) throw new Error(`Upstream ${key} changed. Review and update upstream-surface.json before release.`);
@@ -72,7 +73,7 @@ for (const required of ['background.js', 'content.js', 'intercept.js', 'css/site
 const hashes = {};
 for (const file of await filesUnder(path.join(root, 'dist/firefox'))) hashes[path.relative(path.join(root, 'dist/firefox'), file).replaceAll('\\', '/')] = sha256(await fs.readFile(file));
 await writeJson(path.join(root, 'artifacts/build-info.json'), {
-    upstream: lock, version, addonId: config.addonId,
+    upstream: lock, upstreamManifestVersion, version, addonId: config.addonId,
     updateUrl: built.browser_specific_settings.gecko.update_url ?? null,
     minFirefoxVersion: config.minimumFirefoxVersion,
     sourceArchiveSha256: sha256(archive),

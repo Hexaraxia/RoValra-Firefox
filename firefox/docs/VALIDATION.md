@@ -1,4 +1,12 @@
-# Validation on 2026-09-26
+# Validation
+
+## Update repair on 2026-10-05
+
+The scheduled workflow failed at release discovery because upstream published `v2.6.14.1` and the parser accepted only three-part versions. The tagged source also keeps `2.6.14` in its manifest. Release discovery now accepts stable three- and four-part tags, and manifest validation accepts an exact match or the matching three-part base of a hotfix tag. Other mismatches still fail.
+
+Firefox version `2.6.14.103` encodes upstream `2.6.14.1` plus port revision 3. The add-on ID and update-feed URL are unchanged. Tests cover release discovery, rejected draft/prerelease/malformed tags, manifest mismatches, component limits, and ordering across both upstream hotfixes and port corrections. All 28 tests pass.
+
+The new source builds successfully. Permission, host, and content-script surfaces are unchanged, and the existing privacy/compatibility transforms still apply. Mozilla lint reports zero errors and 265 warnings (264 upstream HTML assignment warnings and one Android-version warning). Firefox 157.0 loaded the new temporary build in a disposable profile, initialized 331 settings and rules 999/1000, and displayed the onboarding dialog on the logged-out Roblox charts page with no fatal extension errors. Four upstream unreachable-code warnings remain. Authenticated Roblox features were not tested.
 
 ## Published release 2.6.13.3
 
