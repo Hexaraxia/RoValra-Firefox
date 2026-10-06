@@ -8,6 +8,10 @@ Upstream also added a global Firefox compatibility shim. Its fetch/event/respons
 
 All 35 regression tests pass. Source 34435e7912dd8d7b9ac6857f985e1fc462b45f9a builds as 2.6.15.3. Manifest permission/injection surfaces and privacy transforms remain unchanged. Mozilla lint reports zero errors and the same 265 warnings. Firefox 157.0.1 loaded the temporary build in a disposable profile, initialized 339 settings and rules 999/1000, and showed onboarding on the logged-out Roblox charts page with no fatal extension errors. Four upstream unreachable-code warnings remain. Authenticated Roblox features are not covered.
 
+[Workflow 37528917580](https://github.com/Hexaraxia/RoValra-Firefox/actions/runs/37528917580) passed build, signing, and publication of [firefox-v2.6.15.3](https://github.com/Hexaraxia/RoValra-Firefox/releases/tag/firefox-v2.6.15.3). The published XPI SHA-256 is `fa317d84d586bf1a5900d0f0f26325ef1c117f4864e3492465ee2a38438af50d`, matching the update feed. A subsequent release check correctly reports the version already published.
+
+Firefox 157.0.1 in a disposable profile discovered, downloaded, and installed the signed update from 2.6.14.103 to 2.6.15.3 through the published feed using the normal update prompt handler. The add-on remained active, signed (`signedState: 2`), and non-temporary, with automatic updates enabled. No permission intervention was needed. The report is `artifacts/signed-update-2.6.14.103-to-2.6.15.3.json` in the development workspace. As before, this explicitly invokes a periodic-reason update check, does not wait for the browser's elapsed timer, and does not touch the user's existing browser profile.
+
 ## Update repair on 2026-10-05
 
 The scheduled workflow failed at release discovery because upstream published `v2.6.14.1` and the parser accepted only three-part versions. The tagged source also keeps `2.6.14` in its manifest. Release discovery now accepts stable three- and four-part tags, and manifest validation accepts an exact match or the matching three-part base of a hotfix tag. Other mismatches still fail.

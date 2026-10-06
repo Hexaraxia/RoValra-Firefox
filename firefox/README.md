@@ -4,7 +4,7 @@ This builds a personal Firefox port directly from published [RoValra releases](h
 
 The current source lock is RoValra 2.6.15, commit `34435e7912dd8d7b9ac6857f985e1fc462b45f9a`. The resulting port version is `2.6.15.3`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
 
-The signed [2.6.14.103 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.14.103/rovalra-firefox-2.6.14.103.xpi) is published. Firefox 157.0 successfully upgraded the previous signed 2.6.13.3 installation through the published update feed. This fork's signing secrets and scheduled workflow are configured. Existing installations can update automatically; to check immediately, open `about:addons` and use the gear menu's **Check for Updates**. For a first installation, use Firefox to download the XPI, disable the old rav4 port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, use **Install Add-on From File** in that gear menu.
+The signed [2.6.15.3 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.15.3/rovalra-firefox-2.6.15.3.xpi) is published. Firefox 157.0.1 successfully upgraded the previous signed 2.6.14.103 installation through the published update feed. This fork's signing secrets and scheduled workflow are configured. Existing installations can update automatically; to check immediately, open `about:addons` and use the gear menu's **Check for Updates**. For a first installation, use Firefox to download the XPI, disable the old rav4 port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, use **Install Add-on From File** in that gear menu.
 
 ## One-time setup
 
