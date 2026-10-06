@@ -1,5 +1,13 @@
 # Validation
 
+## Upstream compatibility repair on 2026-10-06
+
+The two scheduled runs after the version-format repair passed. The next failure began when upstream published 2.6.15: the authenticated-user helper already contained the readiness fix, so the legacy patch anchor no longer existed. The transform now verifies the ready-state helper and accepts that corrected cold-start path unchanged, while retaining the fix for older sources. Tests exercise both source fixtures when DOMContentLoaded has fired, is pending, or fires during the storage read, and reject unexpected helper/path changes.
+
+Upstream also added a global Firefox compatibility shim. Its fetch/event/response modifications overlap this port's adapters, and its new `proxyFetch` and `fetchImageAsDataUrl` background handlers do not preserve the maintained fetch restrictions. The build removes that sole entry import and both handlers. The removed handler block is guarded by its reviewed SHA-256; changed or partial entry points stop the build for review. Upstream's separate Firefox packaging script is not invoked. The existing extension ID and update feed are preserved.
+
+All 35 regression tests pass. Source 34435e7912dd8d7b9ac6857f985e1fc462b45f9a builds as 2.6.15.3. Manifest permission/injection surfaces and privacy transforms remain unchanged. Mozilla lint reports zero errors and the same 265 warnings. Firefox 157.0.1 loaded the temporary build in a disposable profile, initialized 339 settings and rules 999/1000, and showed onboarding on the logged-out Roblox charts page with no fatal extension errors. Four upstream unreachable-code warnings remain. Authenticated Roblox features are not covered.
+
 ## Update repair on 2026-10-05
 
 The scheduled workflow failed at release discovery because upstream published `v2.6.14.1` and the parser accepted only three-part versions. The tagged source also keeps `2.6.14` in its manifest. Release discovery now accepts stable three- and four-part tags, and manifest validation accepts an exact match or the matching three-part base of a hotfix tag. Other mismatches still fail.

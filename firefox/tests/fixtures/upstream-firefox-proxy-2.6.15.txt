@@ -1,0 +1,88 @@
+        case 'fetchImageAsDataUrl': {
+            let imageUrl;
+            try {
+                imageUrl = new URL(request.url);
+            } catch {
+                sendResponse({ error: 'Invalid URL' });
+                return false;
+            }
+            if (
+                imageUrl.protocol !== 'https:' &&
+                imageUrl.protocol !== 'http:'
+            ) {
+                sendResponse({ error: 'Unsupported protocol' });
+                return false;
+            }
+            //Verified
+            fetch(imageUrl.toString(), { credentials: 'omit' })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        throw new Error(`Request failed (${response.status})`);
+                    }
+                    const bytes = new Uint8Array(await response.arrayBuffer());
+                    if (bytes.length > 20 * 1024 * 1024) {
+                        throw new Error('Image too large');
+                    }
+                    const contentType = (
+                        response.headers.get('content-type') || ''
+                    ).split(';')[0];
+                    const imageType = contentType.startsWith('image/')
+                        ? contentType
+                        : getImageTypeFromBytes(bytes);
+                    if (!imageType) throw new Error('Not an image');
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i += 0x8000) {
+                        binary += String.fromCharCode(
+                            ...bytes.subarray(i, i + 0x8000),
+                        );
+                    }
+                    sendResponse({
+                        dataUrl: `data:${imageType};base64,${btoa(binary)}`,
+                    });
+                })
+                .catch((err) => sendResponse({ error: err.message }));
+            return true;
+        }
+
+        case 'proxyFetch': {
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(request.url);
+            } catch {
+                sendResponse({ error: 'Invalid URL' });
+                return false;
+            }
+            if (
+                parsedUrl.protocol !== 'https:' &&
+                parsedUrl.protocol !== 'http:'
+            ) {
+                sendResponse({ error: 'Unsupported protocol' });
+                return false;
+            }
+            const { method, headers, body, credentials, cache, redirect } =
+                request.options || {};
+            //Verified
+            fetch(parsedUrl.toString(), {
+                method,
+                headers,
+                body,
+                credentials,
+                cache,
+                redirect,
+            })
+                .then(async (response) => {
+                    const responseHeaders = {};
+                    response.headers.forEach(
+                        (val, key) => (responseHeaders[key] = val),
+                    );
+                    sendResponse({
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: responseHeaders,
+                        body: await response.arrayBuffer().catch(() => null),
+                    });
+                })
+                .catch((err) => sendResponse({ error: err.message }));
+            return true;
+        }
+

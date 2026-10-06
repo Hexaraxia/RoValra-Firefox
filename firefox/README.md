@@ -2,7 +2,7 @@
 
 This builds a personal Firefox port directly from published [RoValra releases](https://github.com/NotValra/RoValra/releases), applies maintained compatibility fixes, checks it, obtains Mozilla signing, and publishes an update feed. It does not wait for the separate rav4 port.
 
-The current source lock is RoValra 2.6.14.1, commit `d661ed8e0d2ae7deeef427356df39c3b39bea24d`. The resulting port version is `2.6.14.103`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
+The current source lock is RoValra 2.6.15, commit `34435e7912dd8d7b9ac6857f985e1fc462b45f9a`. The resulting port version is `2.6.15.3`, named `RoValra Personal Port`. Desktop Firefox 140 or newer is required.
 
 The signed [2.6.14.103 installer](https://github.com/Hexaraxia/RoValra-Firefox/releases/download/firefox-v2.6.14.103/rovalra-firefox-2.6.14.103.xpi) is published. Firefox 157.0 successfully upgraded the previous signed 2.6.13.3 installation through the published update feed. This fork's signing secrets and scheduled workflow are configured. Existing installations can update automatically; to check immediately, open `about:addons` and use the gear menu's **Check for Updates**. For a first installation, use Firefox to download the XPI, disable the old rav4 port, and leave automatic updates enabled. If Firefox saves the file instead of offering installation, use **Install Add-on From File** in that gear menu.
 
@@ -54,6 +54,7 @@ Upstream hotfix tags may retain their matching three-part base version in `manif
 
 - Firefox event-page background replaces Chrome's service worker.
 - A compatibility adapter handles callback and Promise extension APIs, cross-compartment event data, allowed cross-origin requests, optional permission user gestures, typed game-launch commands, and avatar-renderer transport.
+- Upstream 2.6.15 includes its own Firefox shim. This build removes its entry import and the two reviewed proxy handlers so that the maintained adapters remain the only compatibility layer. The readiness transform accepts either the legacy startup bug or upstream's verified corrected code; unexpected changes still stop the build for review.
 - Exact patch anchors and the upstream permission/content-script baseline stop builds when upstream changes need review. They cannot prove that every future upstream feature works. Failed runs leave the existing signed release available.
 - Build execution has no Mozilla signing secrets. Signing and publication happen in separate jobs. Signed payloads must match the checked unsigned package before the update feed is generated. Manifest JSON is compared by values because Mozilla reformats it during signing; every other payload file must match byte for byte.
 - Each release includes the corresponding prepared source and SHA-256 provenance. Restricted upstream logo, contributor, and donor-tier artwork is replaced with original geometric artwork.

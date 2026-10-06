@@ -1,6 +1,7 @@
 import { readFile, writeFile, readdir, mkdir, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sha256 } from './common.mjs';
 
 const templates = fileURLToPath(new URL('../compatibility/', import.meta.url));
 
@@ -11,10 +12,26 @@ export function replaceExactly(source, anchor, replacement, label, expected = 1)
 }
 
 export function fixAuthenticatedUserDomReady(source) {
-    return replaceExactly(source,
-        "    await new Promise((resolve) => {\n        document.addEventListener('DOMContentLoaded', resolve, { once: true });\n    });",
-        '    await waitForDom();',
-        'authenticated user DOM readiness');
+    const helper = `function waitForDom() {
+    return new Promise((resolve) => {
+        if (document.readyState !== 'loading') {
+            resolve();
+        } else {
+            document.addEventListener('DOMContentLoaded', resolve, {
+                once: true,
+            });
+        }
+    });
+}`;
+    replaceExactly(source, helper, helper, 'authenticated user ready-state helper');
+    const tail = '\n\n    const scrapedId = await scrapeAndCacheId();\n\n    return scrapedId;\n}';
+    const legacy = "    await new Promise((resolve) => {\n        document.addEventListener('DOMContentLoaded', resolve, { once: true });\n    });" + tail;
+    const ready = '    await waitForDom();' + tail;
+    if (source.includes(ready)) {
+        if (source.includes(legacy)) throw new Error('Ambiguous authenticated user DOM readiness');
+        return replaceExactly(source, ready, ready, 'upstream authenticated user DOM readiness');
+    }
+    return replaceExactly(source, legacy, ready, 'authenticated user DOM readiness');
 }
 
 function replaceSection(source, start, end, replacement, label) {
@@ -23,6 +40,24 @@ function replaceSection(source, start, end, replacement, label) {
     const to = source.indexOf(end, from + start.length);
     if (to < 0) throw new Error(`Firefox compatibility section order changed: ${label}`);
     return source.slice(0, from) + replacement + source.slice(to);
+}
+
+export function isolateFirefoxCompatibility(index, background) {
+    const importLine = "import './core/firefoxCompat.js';\n";
+    const start = "        case 'fetchImageAsDataUrl': {";
+    const end = "        case 'fetchRobloxApi':";
+    const hasImport = index.includes(importLine);
+    const hasBridge = background.includes(start) || background.includes("case 'proxyFetch':");
+    if (!hasImport && !hasBridge) return { index, background };
+    if (!hasImport || !hasBridge) throw new Error('Upstream Firefox compatibility entry points changed');
+    const from = background.indexOf(start);
+    const to = background.indexOf(end, from);
+    const bridge = background.slice(from, to);
+    if (from < 0 || to <= from || sha256(bridge) !== '8395aece2f410ea5997e7bd528dafb6ecd9ac31787fc0b269f972e44a6f0609f') throw new Error('Upstream Firefox proxy handlers changed; review before replacing');
+    return {
+        index: replaceExactly(index, importLine, '', 'use maintained Firefox adapters'),
+        background: replaceSection(background, start, end, '', 'remove duplicate Firefox proxy handlers'),
+    };
 }
 
 async function walk(directory) {
@@ -45,6 +80,15 @@ export async function applyCompatibility(sourceDir, options = {}) {
         const original = edits.get(filename) ?? (await readFile(filename, 'utf8')).replace(/\r\n/g, '\n');
         edits.set(filename, transform(original));
     }
+
+    const indexPath = path.join(root, 'src/content/index.js');
+    const backgroundPath = path.join(root, 'src/background/background.js');
+    const originalIndex = (await readFile(indexPath, 'utf8')).replace(/\r\n/g, '\n');
+    const originalBackground = (await readFile(backgroundPath, 'utf8')).replace(/\r\n/g, '\n');
+    const isolated = isolateFirefoxCompatibility(originalIndex, originalBackground);
+    edits.set(indexPath, isolated.index);
+    edits.set(backgroundPath, isolated.background);
+    if (isolated.index !== originalIndex) transforms.push('isolated-firefox-adapters');
 
     await edit('src/background/background.js', (source) => {
         source = `import { handleFirefoxMessage, verifySender, verifyFetchOptions, requestPermission } from '../firefox/background.js';\nimport { isRobloxHost } from '../firefox/policy.js';\n` + source;
